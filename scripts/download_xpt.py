@@ -6,6 +6,7 @@ from rich import print as rprint
 from rich.console import Console
 import datetime
 import os
+import sys
 
 # Lucas Kearns
 # 5 Oct 2026
@@ -80,27 +81,35 @@ console.print(xpt_urls, justify="center")
 #############################
 ## Save each xpt file to disk
 #############################
-print(str_date)
 
 
 generated_dir = os.path.join(
     output_file_path, f"nhanes_{params['Cycle']}_date_{str_date}"
 )
-print(generated_dir)
-
 
 if not os.path.exists(generated_dir):
     os.mkdir(generated_dir)
 
 
 for link in xpt_urls.keys():
-    print(link)
+    console.rule(f"Downloading xpt files from {link}", style="blue")
 
     url_params = parse_qs(urlparse(link).query)
-    print(url_params)
 
-    # Add component, make file
+    comp_fname = (
+        f"{generated_dir}/{url_params['Cycle'][0]}_{url_params['Component'][0]}"
+    )
 
-    # parse and save all of the xpt files
+    xpt_files = xpt_urls[link]
 
-    # break and see if it worked
+    if len(xpt_files) != 0:
+        if not os.path.exists(comp_fname):
+            os.mkdir(comp_fname)
+
+        for f in xpt_files:
+            xpt_response = requests.get(f)
+            xpt_out_name = f"{comp_fname}/{f.split('/')[-1]}"
+
+            console.print(f"--\nDownloading from {f}\nWriting to: {xpt_out_name}")
+            with open(xpt_out_name, "wb") as open_f:
+                open_f.write(xpt_response.content)
