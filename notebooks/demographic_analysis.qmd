@@ -1,0 +1,129 @@
+---
+title: "demographic analysis"
+format: html
+editor: visual
+code-fold: true
+toc: true
+embed-resources: true
+authors:
+  - Lucas Kearns
+date: 14 Oct 2026
+---
+
+```{r}
+suppressPackageStartupMessages({
+library(haven)
+library(tidyverse)
+})
+
+theme_set(theme_classic())
+
+demo_dat <- read_xpt("/Users/lucaskearns/personal_projects/nhanes/data/nhanes_2021-2023_date_2026-10-12/2021-2023_Demographics/DEMO_L.xpt")
+
+```
+
+## Age
+
+```{r}
+#| fig-width: 7
+#| fig-height: 5
+age_df <- table(demo_dat["RIDAGEYR"]) %>%
+  as.data.frame() %>%
+  mutate(RIDAGEYR = as.numeric(RIDAGEYR),
+         pct = Freq / sum(Freq),
+         fmt_pct = sprintf("%.1f", (pct * 100)))
+
+age_df %>%
+  ggplot(aes(RIDAGEYR, Freq)) +
+  geom_col() +
+  xlab("Age")
+```
+
+## Gender
+
+```{r}
+#| fig-width: 7
+#| fig-height: 5
+
+gender_df <- table(demo_dat["RIAGENDR"]) %>%
+  as.data.frame() %>%
+  mutate(RIAGENDR = case_when(RIAGENDR == 1 ~ "Male",
+                              RIAGENDR == 2 ~ "Female",
+                              TRUE ~ NA),
+        pct = Freq / sum(Freq),
+        fmt_pct = sprintf("%.1f", (pct * 100)))
+gender_df %>%
+  ggplot(aes(RIAGENDR, Freq)) +
+  geom_text(aes(label = fmt_pct), vjust = -.5) + 
+  geom_col() +
+  xlab("Gender")
+```
+
+## Ethnicity
+
+```{r}
+#| fig-width: 7
+#| fig-height: 6
+gender_df <- table(demo_dat["RIDRETH3"]) %>%
+  as.data.frame() %>%
+  mutate(RIDRETH3 = case_when(RIDRETH3 == 1 ~ "Mexican American",
+                              RIDRETH3 == 2 ~ "Other Hispanic",
+                              RIDRETH3 == 3 ~ "Non-Hispanic White",
+                              RIDRETH3 == 4 ~ "Non-Hispanic Black",
+                              RIDRETH3 == 5 ~ "Non-Hispanic Asian",
+                              RIDRETH3 == 6 ~ "Other Race - Including Multi-Racial",
+                              RIDRETH3 == 7 ~ "Missing",
+                              TRUE ~ NA),
+         RIDRETH3 = fct_reorder(RIDRETH3, Freq, .desc = TRUE),
+         pct = Freq / sum(Freq),
+         fmt_pct = sprintf("%.1f", (pct * 100)))
+
+gender_df %>%
+  ggplot(aes(RIDRETH3, Freq)) +
+  geom_col() +
+  geom_text(aes(label = fmt_pct), vjust = -.5) + 
+  theme(axis.text.x = element_text(angle = 60,
+                                   hjust = 1)) +
+  xlab(NULL)
+```
+
+## Education
+
+```{r}
+#| fig-width: 7
+#| fig-height: 6
+education_df <- table(demo_dat["DMDEDUC2"]) %>%
+  as.data.frame() %>%
+  mutate(DMDEDUC2 = case_when(DMDEDUC2 == 1 ~ "< 9th Grade",
+                              DMDEDUC2 == 2 ~ "9th - 11th Grad (No Diploma)",
+                              DMDEDUC2 == 3 ~ "High School / GED Grad",
+                              DMDEDUC2 == 4 ~ "Some College / AA",
+                              DMDEDUC2 == 5 ~ "College Graduate, or Above",
+                              DMDEDUC2 == 6 ~ "Other Race - Including Multi-Racial",
+                              DMDEDUC2 == 7 ~ "Refused",
+                              DMDEDUC2 == 9 ~ "Don't know",
+                              TRUE ~ NA),
+         DMDEDUC2 = fct_reorder(DMDEDUC2, Freq, .desc = TRUE),
+         pct = Freq / sum(Freq),
+         fmt_pct = sprintf("%.1f", (pct * 100)) )
+
+education_df %>%
+  ggplot(aes(DMDEDUC2, Freq)) +
+  geom_col() +
+  geom_text(aes(label = fmt_pct), vjust = -.5) + 
+  theme(axis.text.x = element_text(angle = 60,
+                                   hjust = 1)) +
+  xlab(NULL)
+```
+
+## Overview
+
+This is a cursory overview of what the population of interest looks like. There are a variety of [other](https://wwwn.cdc.gov/Nchs/Data/Nhanes/Public/2021/DataFiles/DEMO_L.htm) variables available within this dataset, and I may modify this demographic overview in the future.
+
+It is difficult to determine the exact distribution of ages due to the collapsing of individuals over 80 years old into the 80 year category. However, there appears to be comparably greater frequency year by year for the 0 - 20 and 60 - 80 age range in comparison to the 20 - 60 year age range.
+
+Although fairly evenly divided, women constitute the majority (53.3%) of the population.
+
+By far the most abundant race observed was Non - Hispanic White at 52.1% of the observations with the next race being Non-Hispanic Black at 13.4%.
+
+This is a reasonably educated population with 64.1% of adult observations (20+) having at least some college. This may be skewed by the abunance of older individuals in the population as America has been consistenly trending towards more education in the younger generation.

@@ -1,0 +1,130 @@
+---
+title: "examination analysis"
+format: html
+editor: visual
+code-fold: true
+toc: true
+embed-resources: true
+authors:
+  - Lucas Kearns
+date: 15 Oct 2026
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r}
+suppressPackageStartupMessages({
+library(haven)
+library(tidyverse)
+})
+
+theme_set(theme_classic())
+```
+
+
+```{r}
+
+# Load in demographic data
+demo_dat <- read_xpt("/Users/lucaskearns/personal_projects/nhanes/data/nhanes_2021-2023_date_2026-10-12/2021-2023_Demographics/DEMO_L.xpt")
+
+# Load in examination data
+balance_dat <- read_xpt("/Users/lucaskearns/personal_projects/nhanes/data/nhanes_2021-2023_date_2026-10-12/2021-2023_Examination/BAX_L.xpt")
+blood_pressure_dat <- read_xpt("/Users/lucaskearns/personal_projects/nhanes/data/nhanes_2021-2023_date_2026-10-12/2021-2023_Examination/BPXO_L.xpt")
+body_measure_dat <- read_xpt("/Users/lucaskearns/personal_projects/nhanes/data/nhanes_2021-2023_date_2026-10-12/2021-2023_Examination/BMX_L.xpt")
+liver_ultrasound_dat <- read_xpt("/Users/lucaskearns/personal_projects/nhanes/data/nhanes_2021-2023_date_2026-10-12/2021-2023_Examination/LUX_L.xpt")
+
+# Add DEMO data for easier investigation
+demo_balance_dat <- balance_dat %>%
+  inner_join(demo_dat, by = "SEQN")
+demo_blood_pressure_dat <- blood_pressure_dat %>%
+  inner_join(demo_dat, by = "SEQN")
+demo_body_measure_dat <- body_measure_dat %>%
+  inner_join(demo_dat, by = "SEQN")
+demo_liver_ultrasound_dat <- liver_ultrasound_dat %>%
+  inner_join(demo_dat, by = "SEQN")
+
+```
+
+Body Measure Dat
+```{r}
+# Weight
+# Population
+# Adults vs Children
+# 10 year bins
+# Males vs females
+demo_body_measure_dat <- demo_body_measure_dat %>%
+  mutate(weight_lbs = BMXWT * 2.205,
+         gender = case_when(RIAGENDR == 1 ~ "Male",
+                            RIAGENDR == 2 ~ "Female"))
+
+demo_body_measure_dat %>%
+  ggplot(aes(weight_lbs)) +
+  geom_histogram() +
+  xlab("Weight (lbs)")
+
+demo_body_measure_dat %>%
+  ggplot(aes(weight_lbs, fill = RIDAGEYR < 18)) +
+  geom_histogram() +
+  xlab("Weight (lbs)")
+
+
+
+# Looking at adult weight
+median_everyone <- demo_body_measure_dat %>%
+  filter(RIDAGEYR > 18) %>%
+  pull(weight_lbs) %>%
+  median(na.rm = TRUE)
+
+demo_body_measure_dat %>%
+  filter(RIDAGEYR > 18) %>%
+  ggplot(aes(weight_lbs)) +
+  geom_histogram() +
+  xlab("Weight (lbs)") +
+  geom_vline(xintercept = median_everyone,
+             linetype = "dashed")
+
+
+male_med_bw <- demo_body_measure_dat %>%
+  filter(RIDAGEYR > 18,
+         gender == "Male") %>%
+  pull(weight_lbs) %>%
+  median(na.rm = TRUE)
+
+female_med_bw <- demo_body_measure_dat %>%
+  filter(RIDAGEYR > 18,
+         gender == "Female") %>%
+  pull(weight_lbs) %>%
+  median(na.rm = TRUE)
+
+demo_body_measure_dat %>%
+  filter(RIDAGEYR > 18) %>%
+  ggplot(aes(weight_lbs, fill = gender )) +
+  geom_histogram() +
+  xlab("Weight (lbs)") +
+  geom_vline(xintercept = male_med_bw,
+             linetype = "dashed") +
+    geom_vline(xintercept = female_med_bw,
+             linetype = "dashed")
+
+
+
+
+# Height
+# Population
+# Adults vs Children
+# 10 year bins
+
+
+# BMI
+
+```
+
+Blood Pressure
+
+
+Balance
+
+
+Liver Ultrasound
+
+
